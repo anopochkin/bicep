@@ -77,28 +77,31 @@ az deployment group create `
 After deployment, you will need to upload test files to the created container and then monitor their lifecycle.
 **Note:** You might need the `Storage Blob Data Contributor` role on the deployed Storage Account to upload blobs using `--auth-mode login`.
 
-The commands below are for PowerShell.
+The commands below are for PowerShell. Execute them sequentially in the same PowerShell session after successful Bicep deployment:
 
+### 1. Get the deployed Storage Account name:
 ```powershell
 # Ensure $ResourceGroupName is set to the name of the resource group used in "Deployment Steps"
 # For example: $ResourceGroupName = "rg-blob-lifecycle-project"
-
-# 1. Get the deployed Storage Account name:
 $DeployedStorageAccountName = (az storage account list --resource-group "$ResourceGroupName" --query "[0].name" -o tsv)
 Write-Host "Using Storage Account: $DeployedStorageAccountName"
-
-# 2. Set the container name (default from Bicep):
+``` 
+### 2. Set the container name (default from Bicep):
+```
 $DeployedContainerName = "lifecycle-data-container"
-
-# 3. Create and upload test files (example):
+```
+### 3. Create and upload test files (example):
+```
 New-Item -ItemType File -Name "testfile1.txt" -Force | Out-Null
 New-Item -ItemType File -Name "photo_archive.zip" -Force | Out-Null
 
 az storage blob upload --account-name "$DeployedStorageAccountName" --container-name "$DeployedContainerName" --name "testfile1.txt" --file "testfile1.txt" --auth-mode login
 az storage blob upload --account-name "$DeployedStorageAccountName" --container-name "$DeployedContainerName" --name "photo_archive.zip" --file "photo_archive.zip" --auth-mode login
 Write-Host "Test files uploaded."
+```
 
-# 4. Example command to check blob tier (for testfile1.txt):
+### 4. Example command to check blob tier (for testfile1.txt):
+```
 Write-Host "--- Checking tier for testfile1.txt ---"
 Get-Date
 az storage blob show `
@@ -107,21 +110,21 @@ az storage blob show `
   --name "testfile1.txt" `
   --auth-mode login `
   --query "{Name:name, Tier:properties.blobTier, LastModified:properties.lastModified}"
-
+```
 # Repeat the above command for other files or at different time intervals for your tests.
 
 
 *   **Test 1 : Initially: Hot**
-    *   See details and result: : ![Test 1 Result](hot.png)
+    *   See details and result: : ![Test 1 Result](images/hot.png)
         
 *   **Test 2 : After daysToCool (default 1 day): Cool**
-    *   See details and result: : ![Test 2 Result](cool.png)
+    *   See details and result: : ![Test 2 Result](images/cool.png)
 
 *   **Test 3 : After daysToArchive (default 2 days): Archive**
-    *   See details and result: : ![Test 3 Result](archive.png)
+    *   See details and result: : ![Test 3 Result](images/archive.png)
 
 *   **Test 4 : After daysToDelete (default 3 days): Blobs should be deleted.**
-    *   See details and result: : ![Test 4 Result](deleted.png)
+    *   See details and result: : ![Test 4 Result](images/deleted.png)
 
 ## Cleanup
 To remove all resources created by this project, delete the resource group:
